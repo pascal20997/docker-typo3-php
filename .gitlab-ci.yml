@@ -18,7 +18,7 @@ services:
   - docker:dind
 
 before_script:
-  - echo "$CI_BUILD_TOKEN" | docker login -u gitlab-ci-token $DOCKER_REGISTRY --password-stdin
+  - echo "$CI_BUILD_TOKEN" | docker login --username gitlab-ci-token $DOCKER_REGISTRY --password-stdin
 
 build:
   stage: build
@@ -74,8 +74,10 @@ release-tagged:
 push-on-dockerhub:
   stage: release
   before_script:
-    - echo "$REGISTRY_PASSWORD" | docker login -u "$REGISTRY_USER" --password-stdin
   script:
+    - docker pull $CONTAINER_LATEST_IMAGE
     - docker tag $CONTAINER_LATEST_IMAGE $CONTAINER_DOCKERHUB
+    - docker logout
+    - echo "$REGISTRY_PASSWORD" | docker login --username "$REGISTRY_USER" --password-stdin
     - docker push $CONTAINER_DOCKERHUB
     
