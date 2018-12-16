@@ -14,3 +14,7 @@ RUN /app/install-composer.sh
 
 # copy custom configurations
 COPY php-configs /usr/local/etc/php/conf.d
+
+# cleanup
+RUN apt-get clean \
+	&& rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
