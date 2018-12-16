@@ -13,7 +13,7 @@ variables:
   CONTAINER_TEST_IMAGE: docker-registry.kronova.net/docker/typo3-php:commit-$CI_COMMIT_SHA
   CONTAINER_LATEST_IMAGE: docker-registry.kronova.net/docker/typo3-php:latest
   CONTAINER_TAGGED_IMAGE: docker-registry.kronova.net/docker/typo3-php:$CI_COMMIT_REF_NAME
-  CONTAINER_DOCKERHUB: kronova/docker-php
+  CONTAINER_DOCKERHUB: kronova/typo3-php
 services:
   - docker:dind
 
