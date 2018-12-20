@@ -8,6 +8,8 @@ libzzip-dev libpq-dev unzip \
 
 RUN sed -i -e "s?listen = 127.0.0.1:9000?listen = 9000?g" /usr/local/etc/php-fpm.d/www.conf
 RUN sed -i -e "s?;chdir = /var/www?chdir = /var/www/html?g" /usr/local/etc/php-fpm.d/www.conf
+RUN sed -i -e "s?user = www-data?user = daemon?" /usr/local/etc/php-fpm.d/www.conf
+RUN sed -i -e "s?group = www-data?group = daemon?" /usr/local/etc/php-fpm.d/www.conf
 
 COPY install-composer.sh /app/install-composer.sh
 RUN /app/install-composer.sh
