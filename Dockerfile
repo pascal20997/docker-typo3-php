@@ -20,6 +20,9 @@ RUN /app/install-composer.sh
 # copy custom configurations
 COPY php-configs /usr/local/etc/php/conf.d
 
+# add user typo3 to allow shell access
+RUN useradd -g 1 -m -s "/bin/bash" typo3
+
 # cleanup
 RUN apt-get clean \
 	&& rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
