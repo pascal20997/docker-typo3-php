@@ -7,7 +7,7 @@ RUN apt-get update && apt-get install -y imagemagick git nano libwebp-dev libjpe
 libzzip-dev libpq-dev unzip \
 && yes '' | pecl install -f apcu \
 && docker-php-ext-configure gd --with-jpeg-dir=/usr/include --with-webp-dir=/usr/include --with-freetype-dir=/usr/include \
-&& docker-php-ext-install gd mbstring opcache mysqli json intl zip pdo pdo_pgsql pgsql
+&& docker-php-ext-install gd mbstring opcache mysqli json intl zip pdo pdo_pgsql pgsql bcmath
 
 RUN sed -i -e "s?listen = 127.0.0.1:9000?listen = 9000?g" /usr/local/etc/php-fpm.d/www.conf
 RUN sed -i -e "s?;chdir = /var/www?chdir = /var/www/html?g" /usr/local/etc/php-fpm.d/www.conf
