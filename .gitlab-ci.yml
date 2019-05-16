@@ -83,6 +83,7 @@ push-on-dockerhub:
     - docker push $CONTAINER_DOCKERHUB
 
 trigger-typo3-utilities:
+  image: debian:latest
   stage: trigger
   before_script:
   script:
