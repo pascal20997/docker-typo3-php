@@ -4,6 +4,7 @@ stages:
   - build
   - test
   - release
+  - trigger
 
 # When using dind, it's wise to use the overlayfs driver for
 # improved performance.
@@ -80,4 +81,9 @@ push-on-dockerhub:
     - docker logout
     - echo "$REGISTRY_PASSWORD" | docker login --username "$REGISTRY_USER" --password-stdin
     - docker push $CONTAINER_DOCKERHUB
-    
+
+trigger-typo3-utilities:
+  stage: trigger
+  before_script:
+  script:
+    - "curl -X POST -F token=d5403e897bd63d9d2213f6febe3921 -F ref=REF_NAME https://git.kronova.net/api/v4/projects/42/trigger/pipeline"
