@@ -87,4 +87,4 @@ trigger-typo3-utilities:
   before_script:
     - ''
   script:
-    - "curl -X POST -F token=d5403e897bd63d9d2213f6febe3921 -F ref=REF_NAME https://git.kronova.net/api/v4/projects/42/trigger/pipeline"
+    - "curl -X POST -F token=d5403e897bd63d9d2213f6febe3921 -F ref=master https://git.kronova.net/api/v4/projects/42/trigger/pipeline"
