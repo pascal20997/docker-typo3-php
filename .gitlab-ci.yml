@@ -82,7 +82,7 @@ push-on-dockerhub:
     - docker push $CONTAINER_DOCKERHUB
 
 trigger-typo3-utilities:
-  image: debian:latest
+  image: kronova/typo3-utilities
   stage: trigger
   before_script:
     - ''
