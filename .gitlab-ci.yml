@@ -1,4 +1,4 @@
-image: docker:stable
+image: docker:19.03.0
 
 stages:
   - build
@@ -16,8 +16,9 @@ variables:
   CONTAINER_LATEST_IMAGE: docker-registry.kronova.net/docker/typo3-php:latest
   CONTAINER_TAGGED_IMAGE: docker-registry.kronova.net/docker/typo3-php:$CI_COMMIT_REF_NAME
   CONTAINER_DOCKERHUB: kronova/typo3-php
+
 services:
-  - docker:dind
+  - docker:19.03.0-dind
 
 before_script:
   - echo "$CI_BUILD_TOKEN" | docker login --username gitlab-ci-token $DOCKER_REGISTRY --password-stdin
