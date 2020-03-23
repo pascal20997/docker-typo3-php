@@ -12,7 +12,7 @@ variables:
   DOCKER_DRIVER: overlay2
   DOCKER_REGISTRY: docker-registry.kronova.net
   DOCKER_TLS_CERTDIR: ""
-  CONTAINER_TEST_IMAGE: docker-registry.kronova.net/docker/typo3-php:latest
+  CONTAINER_TEST: docker-registry.kronova.net/docker/typo3-php:$CI_COMMIT_BRANCH
   CONTAINER_DOCKERHUB_BRANCH: kronova/typo3-php:$CI_COMMIT_BRANCH
   CONTAINER_DOCKERHUB_LATEST: kronova/typo3-php:latest
   CONTAINER_DOCKERHUB_TAG: kronova/typo3-php:$CI_COMMIT_TAG
@@ -31,13 +31,14 @@ before_script:
 build:
   stage: build
   script:
-    - docker build -t $CONTAINER_TEST_IMAGE .
+    - docker build -t $CONTAINER_TEST .
     # todo: remove the gitlab container registry completely and use docker hub only
-    - docker push $CONTAINER_TEST_IMAGE
+    - docker push $CONTAINER_TEST
     - mkdir -p ./.build
-    - docker save $CONTAINER_TEST_IMAGE -o ./.build/image.tar
+    - docker save $CONTAINER_TEST -o ./.build/image.tar
   only:
     - master
+    - /^php-.*$/
 
 .test:
   stage: test
@@ -46,39 +47,35 @@ build:
     - docker load < ./.build/image.tar || true
   only:
     - master
+    - /^php-.*$/
 
 test-php:
   extends: .test
   script:
     - docker load < ./.build/image.tar || true
-    - docker run $CONTAINER_TEST_IMAGE php -v
+    - docker run $CONTAINER_TEST php -v
 
 test-typo3_8:
   extends: .test
   script:
-    - docker run $CONTAINER_TEST_IMAGE composer require typo3/minimal '^8'
+    - docker run $CONTAINER_TEST composer require typo3/minimal '^8'
 
 test-typo3_9:
   extends: .test
   script:
-    - docker run $CONTAINER_TEST_IMAGE composer require typo3/minimal '^9'
-
-test-typo3_10:
-  extends: .test
-  script:
-    - docker run $CONTAINER_TEST_IMAGE composer require typo3/minimal '^10'
+    - docker run $CONTAINER_TEST composer require typo3/minimal '^9'
 
 test-imagemagick:
   extends: .test
   script:
-    - docker run $CONTAINER_TEST_IMAGE convert -version
+    - docker run $CONTAINER_TEST convert -version
 
 push-on-dockerhub:
   stage: release
   before_script: []
   script:
-    - docker pull $CONTAINER_TEST_IMAGE
-    - docker tag $CONTAINER_TEST_IMAGE $CONTAINER_DOCKERHUB_LATEST
+    - docker pull $CONTAINER_TEST
+    - docker tag $CONTAINER_TEST $CONTAINER_DOCKERHUB_LATEST
     - docker logout
     - echo "$REGISTRY_PASSWORD" | docker login --username "$REGISTRY_USER" --password-stdin
     - docker push $CONTAINER_DOCKERHUB_LATEST
@@ -91,8 +88,8 @@ push-tag-on-dockerhub:
   stage: release
   before_script: []
   script:
-    - docker pull $CONTAINER_TEST_IMAGE
-    - docker tag $CONTAINER_TEST_IMAGE $CONTAINER_DOCKERHUB_TAG
+    - docker pull $CONTAINER_TEST
+    - docker tag $CONTAINER_TEST $CONTAINER_DOCKERHUB_TAG
     - docker logout
     - echo "$REGISTRY_PASSWORD" | docker login --username "$REGISTRY_USER" --password-stdin
     - docker push $CONTAINER_DOCKERHUB_TAG
@@ -103,8 +100,8 @@ push-branch-on-dockerhub:
   stage: release
   before_script: []
   script:
-    - docker pull $CONTAINER_TEST_IMAGE
-    - docker tag $CONTAINER_TEST_IMAGE $CONTAINER_DOCKERHUB_BRANCH
+    - docker pull $CONTAINER_TEST
+    - docker tag $CONTAINER_TEST $CONTAINER_DOCKERHUB_BRANCH
     - docker logout
     - echo "$REGISTRY_PASSWORD" | docker login --username "$REGISTRY_USER" --password-stdin
     - docker push $CONTAINER_DOCKERHUB_BRANCH
