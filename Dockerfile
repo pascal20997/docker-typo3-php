@@ -1,11 +1,11 @@
-FROM php:7.4-fpm-buster
+FROM php:7.2-fpm-buster
 
 LABEL vendor="kronova.net"
 LABEL maintainer="info@kronova.net"
 
 RUN apt-get update && apt-get install -y imagemagick git nano libwebp-dev libjpeg-dev libfreetype6-dev libicu-dev \
 libzzip-dev libpq-dev unzip libzip-dev libonig-dev && yes '' | pecl install -f apcu
-RUN docker-php-ext-configure gd --with-freetype --with-jpeg
+RUN docker-php-ext-configure gd --with-jpeg-dir=/usr/include --with-webp-dir=/usr/include --with-freetype-dir=/usr/include
 RUN docker-php-ext-install gd mbstring opcache mysqli json intl zip pdo pdo_pgsql pdo_mysql pgsql bcmath
 
 RUN sed -i -e "s?listen = 127.0.0.1:9000?listen = 9000?g" /usr/local/etc/php-fpm.d/www.conf
