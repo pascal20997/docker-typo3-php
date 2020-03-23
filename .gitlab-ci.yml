@@ -12,10 +12,15 @@ variables:
   DOCKER_DRIVER: overlay2
   DOCKER_REGISTRY: docker-registry.kronova.net
   DOCKER_TLS_CERTDIR: ""
-  CONTAINER_TEST_IMAGE: docker-registry.kronova.net/docker/typo3-php:commit-$CI_COMMIT_SHA
-  CONTAINER_LATEST_IMAGE: docker-registry.kronova.net/docker/typo3-php:latest
-  CONTAINER_TAGGED_IMAGE: docker-registry.kronova.net/docker/typo3-php:$CI_COMMIT_REF_NAME
-  CONTAINER_DOCKERHUB: kronova/typo3-php
+  CONTAINER_TEST_IMAGE: docker-registry.kronova.net/docker/typo3-php:latest
+  CONTAINER_DOCKERHUB_BRANCH: kronova/typo3-php:$CI_COMMIT_BRANCH
+  CONTAINER_DOCKERHUB_LATEST: kronova/typo3-php:latest
+  CONTAINER_DOCKERHUB_TAG: kronova/typo3-php:$CI_COMMIT_TAG
+
+cache:
+  key: ${CI_COMMIT_REF_SLUG}
+  paths:
+    - ./.build
 
 services:
   - docker:19.03.0-dind
@@ -27,61 +32,86 @@ build:
   stage: build
   script:
     - docker build -t $CONTAINER_TEST_IMAGE .
+    # todo: remove the gitlab container registry completely and use docker hub only
     - docker push $CONTAINER_TEST_IMAGE
+    - mkdir -p ./.build
+    - docker save $CONTAINER_TEST_IMAGE -o ./.build/image.tar
   only:
     - master
 
-# todo: add better tests
+.test:
+  stage: test
+  before_script:
+    # use gitlab-ci cache instead of container registry to bypass the slow pull
+    - docker load < ./.build/image.tar || true
+  only:
+    - master
+
 test-php:
-  stage: test
+  extends: .test
   script:
-    - docker pull $CONTAINER_TEST_IMAGE
+    - docker load < ./.build/image.tar || true
     - docker run $CONTAINER_TEST_IMAGE php -v
-  only:
-    - master
 
-test-composer:
-  stage: test
+test-typo3_8:
+  extends: .test
   script:
-    - docker pull $CONTAINER_TEST_IMAGE
-    - docker run $CONTAINER_TEST_IMAGE composer -V
-  only:
-    - master
+    - docker run $CONTAINER_TEST_IMAGE composer require typo3/minimal '^8'
+
+test-typo3_9:
+  extends: .test
+  script:
+    - docker run $CONTAINER_TEST_IMAGE composer require typo3/minimal '^9'
+
+test-typo3_10:
+  extends: .test
+  script:
+    - docker run $CONTAINER_TEST_IMAGE composer require typo3/minimal '^10'
 
 test-imagemagick:
-  stage: test
+  extends: .test
   script:
-    - docker pull $CONTAINER_TEST_IMAGE
     - docker run $CONTAINER_TEST_IMAGE convert -version
-  only:
-    - master
-
-release-latest:
-  stage: release
-  script:
-    - docker pull $CONTAINER_TEST_IMAGE
-    - docker tag $CONTAINER_TEST_IMAGE $CONTAINER_LATEST_IMAGE
-    - docker push $CONTAINER_LATEST_IMAGE
-  only:
-    - master
-
-release-tagged:
-  stage: release
-  script:
-    - docker pull $CONTAINER_LATEST_IMAGE
-    - docker tag $CONTAINER_LATEST_IMAGE $CONTAINER_TAGGED_IMAGE
-    - docker push $CONTAINER_TAGGED_IMAGE
-  only:
-    - tags
 
 push-on-dockerhub:
   stage: release
+  before_script: []
   script:
-    - docker pull $CONTAINER_LATEST_IMAGE
-    - docker tag $CONTAINER_LATEST_IMAGE $CONTAINER_DOCKERHUB
+    - docker pull $CONTAINER_TEST_IMAGE
+    - docker tag $CONTAINER_TEST_IMAGE $CONTAINER_DOCKERHUB_LATEST
     - docker logout
     - echo "$REGISTRY_PASSWORD" | docker login --username "$REGISTRY_USER" --password-stdin
-    - docker push $CONTAINER_DOCKERHUB
+    - docker push $CONTAINER_DOCKERHUB_LATEST
+  only:
+    - master
+  allow_failure: false
+  when: manual
+
+push-tag-on-dockerhub:
+  stage: release
+  before_script: []
+  script:
+    - docker pull $CONTAINER_TEST_IMAGE
+    - docker tag $CONTAINER_TEST_IMAGE $CONTAINER_DOCKERHUB_TAG
+    - docker logout
+    - echo "$REGISTRY_PASSWORD" | docker login --username "$REGISTRY_USER" --password-stdin
+    - docker push $CONTAINER_DOCKERHUB_TAG
+  only:
+    - tags
+
+push-branch-on-dockerhub:
+  stage: release
+  before_script: []
+  script:
+    - docker pull $CONTAINER_TEST_IMAGE
+    - docker tag $CONTAINER_TEST_IMAGE $CONTAINER_DOCKERHUB_BRANCH
+    - docker logout
+    - echo "$REGISTRY_PASSWORD" | docker login --username "$REGISTRY_USER" --password-stdin
+    - docker push $CONTAINER_DOCKERHUB_BRANCH
+  only:
+    - /^php-.*$/
+  except:
+    - tags
 
 trigger-typo3-utilities:
   image: kronova/typo3-utilities
@@ -90,3 +120,5 @@ trigger-typo3-utilities:
     - ''
   script:
     - "curl -X POST -F token=d5403e897bd63d9d2213f6febe3921 -F ref=master https://git.kronova.net/api/v4/projects/42/trigger/pipeline"
+  only:
+    - master
