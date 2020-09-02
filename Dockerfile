@@ -1,4 +1,4 @@
-FROM php:7.2-fpm-buster
+FROM php:7.3-fpm-buster
 
 LABEL vendor="kronova.net"
 LABEL maintainer="info@kronova.net"
